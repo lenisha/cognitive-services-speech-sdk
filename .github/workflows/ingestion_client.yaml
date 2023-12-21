@@ -4,6 +4,9 @@ on:
   push:
     branches: ['main', 'master']
     paths: ['samples/ingestion/ingestion-client/**', '.github/workflows/ingestion_client.yaml']
+  workflow_dispatch:
+    branches: ['callcenter']
+    
 
 jobs:
   build:
