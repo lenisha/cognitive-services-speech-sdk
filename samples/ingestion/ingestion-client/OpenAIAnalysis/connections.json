@@ -1,0 +1,50 @@
+{
+    "managedApiConnections": {
+        "azureblob": {
+            "api": {
+                "id": "/subscriptions/xxxxxxx/providers/Microsoft.Web/locations/eastus/managedApis/azureblob"
+            },
+            "authentication": {
+                "type": "ManagedServiceIdentity"
+            },
+            "connection": {
+                "id": "/subscriptions/xxx/resourceGroups/callcenteringest/providers/Microsoft.Web/connections/azureblob-2"
+            },
+            "connectionProperties": {
+                "authentication": {
+                    "audience": "https://storage.azure.com/",
+                    "type": "ManagedServiceIdentity"
+                }
+            },
+            "connectionRuntimeUrl": "https://xxx.06.common.logic-eastus.azure-apihub.net/apim/azureblob/fc17db4b67ab4a518f6e256a2960e588"
+        }
+    },
+    "serviceProviderConnections": {
+        "AzureBlob": {
+            "displayName": "azure-blob2",
+            "parameterSetName": "ManagedServiceIdentity",
+            "parameterValues": {
+                "authProvider": {
+                    "Type": "ManagedServiceIdentity"
+                },
+                "blobStorageEndpoint": "https://xxx.blob.core.windows.net/text-input"
+            },
+            "serviceProvider": {
+                "id": "/serviceProviders/AzureBlob"
+            }
+        },
+        "serviceBus": {
+            "displayName": "servicebus-1",
+            "parameterSetName": "ManagedServiceIdentity",
+            "parameterValues": {
+                "authProvider": {
+                    "Type": "ManagedServiceIdentity"
+                },
+                "fullyQualifiedNamespace": "servicebus-xxx.servicebus.windows.net"
+            },
+            "serviceProvider": {
+                "id": "/serviceProviders/serviceBus"
+            }
+        }
+    }
+}

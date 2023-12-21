@@ -1,0 +1,757 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Condition": {
+                "actions": {
+                    "Upload_blob_to_storage_container_1": {
+                        "inputs": {
+                            "parameters": {
+                                "blobName": "@{variables('file-name')}-openai-raw.json",
+                                "containerName": "openai-result-output",
+                                "content": "@body('HTTP-OpenAI')",
+                                "overrideIfExists": "True"
+                            },
+                            "serviceProviderConfiguration": {
+                                "connectionName": "AzureBlob",
+                                "operationId": "uploadBlob",
+                                "serviceProviderId": "/serviceProviders/AzureBlob"
+                            }
+                        },
+                        "type": "ServiceProvider"
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "Upload_blob_to_storage_container": {
+                            "inputs": {
+                                "parameters": {
+                                    "blobName": "@{variables('file-name')}.json",
+                                    "containerName": "error-report",
+                                    "content": "@body('HTTP-OpenAI')",
+                                    "overrideIfExists": "True"
+                                },
+                                "serviceProviderConfiguration": {
+                                    "connectionName": "AzureBlob",
+                                    "operationId": "uploadBlob",
+                                    "serviceProviderId": "/serviceProviders/AzureBlob"
+                                }
+                            },
+                            "type": "ServiceProvider"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@outputs('HTTP-OpenAI')?['statusCode']",
+                                200
+                            ]
+                        },
+                        {
+                            "equals": [
+                                "",
+                                ""
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Parse_JSON_-_OpenAI": [
+                        "SUCCEEDED"
+                    ]
+                },
+                "type": "If"
+            },
+            "For_each_channel_text": {
+                "actions": {
+                    "Append_to_array_variable": {
+                        "inputs": {
+                            "name": "channel-text",
+                            "value": "@items('For_each_channel_text')?['itn']"
+                        },
+                        "type": "AppendToArrayVariable"
+                    }
+                },
+                "foreach": "@outputs('Parse_JSON_Transcription')?['body']?['combinedRecognizedPhrases']",
+                "runAfter": {
+                    "Parse_JSON_Transcription": [
+                        "SUCCEEDED"
+                    ]
+                },
+                "type": "foreach"
+            },
+            "HTTP-OpenAI": {
+                "inputs": {
+                    "body": {
+                        "frequency_penalty": 0,
+                        "max_tokens": 3192,
+                        "messages": [
+                            {
+                                "content": "@{parameters('system-prompt')}",
+                                "role": "system"
+                            },
+                            {
+                                "content": "Transcription File: @{variables('file-name')}---- Channel 0 - @{variables('channel-text')?[0]} ----- Channel 1 - @{variables('channel-text')?[1]}",
+                                "role": "user"
+                            }
+                        ],
+                        "presence_penalty": 0,
+                        "temperature": 0,
+                        "top_p": 1
+                    },
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "api-key": "@{parameters('openai-key')}"
+                    },
+                    "method": "POST",
+                    "uri": "@{parameters('openai-url')}/openai/deployments/@{parameters('openai-deployment')}/chat/completions?api-version=2023-07-01-preview"
+                },
+                "runAfter": {
+                    "For_each_channel_text": [
+                        "SUCCEEDED"
+                    ]
+                },
+                "runtimeConfiguration": {
+                    "contentTransfer": {
+                        "transferMode": "Chunked"
+                    }
+                },
+                "type": "Http"
+            },
+            "Initialize_Agent": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "channel-text",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_input-path": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_filename": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "file-name",
+                            "type": "string",
+                            "value": "@{split(body('Parse_JSON')?['data']?['url'], '/')?[4]}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Parse_JSON": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_input-path": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "input-path",
+                            "type": "string",
+                            "value": "@{split(body('Parse_JSON')?['data']?['url'],'/')[3]}/@{split(body('Parse_JSON')?['data']?['url'], '/')?[4]}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_filename": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Parse_JSON": {
+                "inputs": {
+                    "content": "@triggerBody()?['contentData']",
+                    "schema": {
+                        "properties": {
+                            "contentData": {
+                                "properties": {
+                                    "data": {
+                                        "properties": {
+                                            "api": {
+                                                "type": "string"
+                                            },
+                                            "blobType": {
+                                                "type": "string"
+                                            },
+                                            "clientRequestId": {
+                                                "type": "string"
+                                            },
+                                            "contentLength": {
+                                                "type": "integer"
+                                            },
+                                            "contentType": {
+                                                "type": "string"
+                                            },
+                                            "eTag": {
+                                                "type": "string"
+                                            },
+                                            "requestId": {
+                                                "type": "string"
+                                            },
+                                            "sequencer": {
+                                                "type": "string"
+                                            },
+                                            "storageDiagnostics": {
+                                                "properties": {
+                                                    "batchId": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "url": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "dataVersion": {
+                                        "type": "string"
+                                    },
+                                    "eventTime": {
+                                        "type": "string"
+                                    },
+                                    "eventType": {
+                                        "type": "string"
+                                    },
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "metadataVersion": {
+                                        "type": "string"
+                                    },
+                                    "subject": {
+                                        "type": "string"
+                                    },
+                                    "topic": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "contentType": {
+                                "type": "string"
+                            },
+                            "deliveryCount": {
+                                "type": "integer"
+                            },
+                            "enqueuedSequenceNumber": {
+                                "type": "integer"
+                            },
+                            "enqueuedTimeUtc": {
+                                "type": "string"
+                            },
+                            "lockToken": {
+                                "type": "string"
+                            },
+                            "lockedUntilUtc": {
+                                "type": "string"
+                            },
+                            "messageId": {
+                                "type": "string"
+                            },
+                            "scheduledEnqueueTimeUtc": {
+                                "type": "string"
+                            },
+                            "sequenceNumber": {
+                                "type": "integer"
+                            },
+                            "timeToLive": {
+                                "type": "string"
+                            },
+                            "userProperties": {
+                                "properties": {
+                                    "aeg-data-version": {
+                                        "type": "string"
+                                    },
+                                    "aeg-delivery-count": {
+                                        "type": "string"
+                                    },
+                                    "aeg-event-type": {
+                                        "type": "string"
+                                    },
+                                    "aeg-metadata-version": {
+                                        "type": "string"
+                                    },
+                                    "aeg-subscription-name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {},
+                "type": "ParseJson"
+            },
+            "Parse_JSON_-_OpenAI": {
+                "inputs": {
+                    "content": "@body('HTTP-OpenAI')",
+                    "schema": {
+                        "properties": {
+                            "choices": {
+                                "items": {
+                                    "properties": {
+                                        "content_filter_results": {
+                                            "properties": {
+                                                "hate": {
+                                                    "properties": {
+                                                        "filtered": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "self_harm": {
+                                                    "properties": {
+                                                        "filtered": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "sexual": {
+                                                    "properties": {
+                                                        "filtered": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "violence": {
+                                                    "properties": {
+                                                        "filtered": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "finish_reason": {
+                                            "type": "string"
+                                        },
+                                        "index": {
+                                            "type": "integer"
+                                        },
+                                        "message": {
+                                            "properties": {
+                                                "content": {
+                                                    "type": "string"
+                                                },
+                                                "role": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "required": [
+                                        "finish_reason",
+                                        "index",
+                                        "message",
+                                        "content_filter_results"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "created": {
+                                "type": "integer"
+                            },
+                            "id": {
+                                "type": "string"
+                            },
+                            "model": {
+                                "type": "string"
+                            },
+                            "object": {
+                                "type": "string"
+                            },
+                            "prompt_filter_results": {
+                                "items": {
+                                    "properties": {
+                                        "content_filter_results": {
+                                            "properties": {
+                                                "hate": {
+                                                    "properties": {
+                                                        "filtered": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "self_harm": {
+                                                    "properties": {
+                                                        "filtered": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "sexual": {
+                                                    "properties": {
+                                                        "filtered": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "violence": {
+                                                    "properties": {
+                                                        "filtered": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "prompt_index": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "prompt_index",
+                                        "content_filter_results"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "usage": {
+                                "properties": {
+                                    "completion_tokens": {
+                                        "type": "integer"
+                                    },
+                                    "prompt_tokens": {
+                                        "type": "integer"
+                                    },
+                                    "total_tokens": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "HTTP-OpenAI": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            },
+            "Parse_JSON_Transcription": {
+                "inputs": {
+                    "content": "@body('Read_blob_content')?['content']",
+                    "schema": {
+                        "properties": {
+                            "combinedRecognizedPhrases": {
+                                "items": {
+                                    "properties": {
+                                        "channel": {
+                                            "type": "integer"
+                                        },
+                                        "display": {
+                                            "type": "string"
+                                        },
+                                        "itn": {
+                                            "type": "string"
+                                        },
+                                        "lexical": {
+                                            "type": "string"
+                                        },
+                                        "maskedITN": {
+                                            "type": "string"
+                                        },
+                                        "sentiment": {
+                                            "properties": {
+                                                "negative": {
+                                                    "type": "number"
+                                                },
+                                                "neutral": {
+                                                    "type": "number"
+                                                },
+                                                "positive": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "required": [
+                                        "channel",
+                                        "lexical",
+                                        "itn",
+                                        "maskedITN",
+                                        "display",
+                                        "sentiment"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "conversationAnalyticsResults": {
+                                "properties": {
+                                    "conversationPiiResults": {
+                                        "properties": {
+                                            "combinedRedactedContent": {
+                                                "type": "array"
+                                            },
+                                            "conversations": {
+                                                "items": {
+                                                    "properties": {
+                                                        "conversationItems": {
+                                                            "type": "array"
+                                                        },
+                                                        "warnings": {
+                                                            "type": "array"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "conversationItems",
+                                                        "warnings"
+                                                    ],
+                                                    "type": "object"
+                                                },
+                                                "type": "array"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "conversationSummarizationResults": {
+                                        "properties": {
+                                            "conversations": {
+                                                "items": {
+                                                    "properties": {
+                                                        "summaries": {
+                                                            "items": {
+                                                                "properties": {
+                                                                    "aspect": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "contexts": {
+                                                                        "items": {
+                                                                            "properties": {
+                                                                                "conversationItemId": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "length": {
+                                                                                    "type": "integer"
+                                                                                },
+                                                                                "offset": {
+                                                                                    "type": "integer"
+                                                                                }
+                                                                            },
+                                                                            "required": [
+                                                                                "conversationItemId",
+                                                                                "offset",
+                                                                                "length"
+                                                                            ],
+                                                                            "type": "object"
+                                                                        },
+                                                                        "type": "array"
+                                                                    },
+                                                                    "text": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "aspect",
+                                                                    "text"
+                                                                ],
+                                                                "type": "object"
+                                                            },
+                                                            "type": "array"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "summaries"
+                                                    ],
+                                                    "type": "object"
+                                                },
+                                                "type": "array"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "duration": {
+                                "type": "string"
+                            },
+                            "durationInTicks": {
+                                "type": "integer"
+                            },
+                            "recognizedPhrases": {
+                                "items": {
+                                    "properties": {
+                                        "channel": {
+                                            "type": "integer"
+                                        },
+                                        "duration": {
+                                            "type": "string"
+                                        },
+                                        "durationInTicks": {
+                                            "type": "integer"
+                                        },
+                                        "nBest": {
+                                            "items": {
+                                                "properties": {
+                                                    "confidence": {
+                                                        "type": "number"
+                                                    },
+                                                    "display": {
+                                                        "type": "string"
+                                                    },
+                                                    "itn": {
+                                                        "type": "string"
+                                                    },
+                                                    "lexical": {
+                                                        "type": "string"
+                                                    },
+                                                    "maskedITN": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "confidence",
+                                                    "lexical",
+                                                    "itn",
+                                                    "maskedITN",
+                                                    "display"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        },
+                                        "offset": {
+                                            "type": "string"
+                                        },
+                                        "offsetInTicks": {
+                                            "type": "integer"
+                                        },
+                                        "recognitionStatus": {
+                                            "type": "string"
+                                        },
+                                        "speaker": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "recognitionStatus",
+                                        "channel",
+                                        "speaker",
+                                        "offset",
+                                        "duration",
+                                        "offsetInTicks",
+                                        "durationInTicks",
+                                        "nBest"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "source": {
+                                "type": "string"
+                            },
+                            "timeStamp": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "Read_blob_content": [
+                        "SUCCEEDED"
+                    ]
+                },
+                "type": "ParseJson"
+            },
+            "Read_blob_content": {
+                "inputs": {
+                    "parameters": {
+                        "blobName": "@variables('file-name')",
+                        "containerName": "json-result-output"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureBlob",
+                        "operationId": "readBlob",
+                        "serviceProviderId": "/serviceProviders/AzureBlob"
+                    }
+                },
+                "runAfter": {
+                    "Initialize_Agent": [
+                        "SUCCEEDED"
+                    ]
+                },
+                "type": "ServiceProvider"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "triggers": {
+            "When_messages_are_available_in_a_queue": {
+                "inputs": {
+                    "parameters": {
+                        "isSessionsEnabled": false,
+                        "queueName": "openai_transcription_queue"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "receiveQueueMessages",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "splitOn": "@triggerOutputs()?['body']",
+                "type": "ServiceProvider"
+            }
+        }
+    },
+    "kind": "Stateful"
+}
