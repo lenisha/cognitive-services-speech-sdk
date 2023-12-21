@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Connector</name>
+    </assembly>
+    <members>
+        <member name="P:Connector.Serializable.Language.Conversations.AudioTiming.Offset">
+            <summary>
+            Gets or sets offset from start of speech audio, in ticks.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.AudioTiming.Duration">
+            <summary>
+            Gets or sets duration of word articulation, in ticks.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.ConversationPiiResultItem.Id">
+            <summary>
+            Gets or sets the id of the conversation item.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.ConversationPiiResultItem.Channel">
+            <summary>
+            Gets or sets the participant id of the conversation item.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.ConversationPiiResultItem.Offset">
+            <summary>
+            Gets or sets the offset of the conversation item.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.ConversationPiiResultItem.RedactedContent">
+            <summary>
+            Gets or sets the redacted content for transcript.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.ConversationPiiResultItem.Entities">
+            <summary>
+            Gets or sets the PII entities for transcript.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.RedactedTranscriptContent.Itn">
+            <summary>
+            Gets or sets PII Redacted Itn version of the transcript input.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.RedactedTranscriptContent.Lexical">
+            <summary>
+            Gets or Sets PII Redacted lexical version of the transcript input.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.RedactedTranscriptContent.MaskedItn">
+            <summary>
+            Gets or sets PII redacted maskedItn version of the transcript input.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.RedactedTranscriptContent.Text">
+            <summary>
+            Gets or Sets PII redacted display version of the transcript input.
+            </summary>
+        </member>
+        <member name="P:Connector.Serializable.Language.Conversations.RedactedTranscriptContent.RedactedAudioTimings">
+            <summary>
+            Gets  Redacted audio timing information for speech input.
+            </summary>
+        </member>
+        <member name="T:Connector.TransientFailureException">
+            <summary>
+            Exception that is being thrown when azure functions should trigger a retry (up to a max. retry limit)
+            after a certain number of minutes (with exponential backoff).
+            </summary>
+        </member>
+    </members>
+</doc>
