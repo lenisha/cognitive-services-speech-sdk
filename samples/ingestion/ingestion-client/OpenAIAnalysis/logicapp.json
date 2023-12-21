@@ -4,12 +4,32 @@
         "actions": {
             "Condition": {
                 "actions": {
-                    "Upload_blob_to_storage_container_1": {
+                    "Upload_blob_to_storage_container_Parsed": {
+                        "inputs": {
+                            "parameters": {
+                                "blobName": "@{variables('file-name')}-openai.json",
+                                "containerName": "openai-result-output",
+                                "content": "@outputs('Parse_JSON_-_OpenAI')?['body']?['choices']?[0]?['message']?['content']"
+                            },
+                            "serviceProviderConfiguration": {
+                                "connectionName": "AzureBlob",
+                                "operationId": "uploadBlob",
+                                "serviceProviderId": "/serviceProviders/AzureBlob"
+                            }
+                        },
+                        "runAfter": {
+                            "Upload_blob_to_storage_container_Raw": [
+                                "SUCCEEDED"
+                            ]
+                        },
+                        "type": "ServiceProvider"
+                    },
+                    "Upload_blob_to_storage_container_Raw": {
                         "inputs": {
                             "parameters": {
                                 "blobName": "@{variables('file-name')}-openai-raw.json",
                                 "containerName": "openai-result-output",
-                                "content": "@body('HTTP-OpenAI')",
+                                "content": "@outputs('Parse_JSON_-_OpenAI')",
                                 "overrideIfExists": "True"
                             },
                             "serviceProviderConfiguration": {
@@ -32,7 +52,7 @@
                                     "overrideIfExists": "True"
                                 },
                                 "serviceProviderConfiguration": {
-                                    "connectionName": "AzureBlob",
+                                    "connectionName": "AzureBlob-2",
                                     "operationId": "uploadBlob",
                                     "serviceProviderId": "/serviceProviders/AzureBlob"
                                 }
@@ -506,20 +526,6 @@
                                         },
                                         "maskedITN": {
                                             "type": "string"
-                                        },
-                                        "sentiment": {
-                                            "properties": {
-                                                "negative": {
-                                                    "type": "number"
-                                                },
-                                                "neutral": {
-                                                    "type": "number"
-                                                },
-                                                "positive": {
-                                                    "type": "number"
-                                                }
-                                            },
-                                            "type": "object"
                                         }
                                     },
                                     "required": [
@@ -527,99 +533,11 @@
                                         "lexical",
                                         "itn",
                                         "maskedITN",
-                                        "display",
-                                        "sentiment"
+                                        "display"
                                     ],
                                     "type": "object"
                                 },
                                 "type": "array"
-                            },
-                            "conversationAnalyticsResults": {
-                                "properties": {
-                                    "conversationPiiResults": {
-                                        "properties": {
-                                            "combinedRedactedContent": {
-                                                "type": "array"
-                                            },
-                                            "conversations": {
-                                                "items": {
-                                                    "properties": {
-                                                        "conversationItems": {
-                                                            "type": "array"
-                                                        },
-                                                        "warnings": {
-                                                            "type": "array"
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "conversationItems",
-                                                        "warnings"
-                                                    ],
-                                                    "type": "object"
-                                                },
-                                                "type": "array"
-                                            }
-                                        },
-                                        "type": "object"
-                                    },
-                                    "conversationSummarizationResults": {
-                                        "properties": {
-                                            "conversations": {
-                                                "items": {
-                                                    "properties": {
-                                                        "summaries": {
-                                                            "items": {
-                                                                "properties": {
-                                                                    "aspect": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "contexts": {
-                                                                        "items": {
-                                                                            "properties": {
-                                                                                "conversationItemId": {
-                                                                                    "type": "string"
-                                                                                },
-                                                                                "length": {
-                                                                                    "type": "integer"
-                                                                                },
-                                                                                "offset": {
-                                                                                    "type": "integer"
-                                                                                }
-                                                                            },
-                                                                            "required": [
-                                                                                "conversationItemId",
-                                                                                "offset",
-                                                                                "length"
-                                                                            ],
-                                                                            "type": "object"
-                                                                        },
-                                                                        "type": "array"
-                                                                    },
-                                                                    "text": {
-                                                                        "type": "string"
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "aspect",
-                                                                    "text"
-                                                                ],
-                                                                "type": "object"
-                                                            },
-                                                            "type": "array"
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "summaries"
-                                                    ],
-                                                    "type": "object"
-                                                },
-                                                "type": "array"
-                                            }
-                                        },
-                                        "type": "object"
-                                    }
-                                },
-                                "type": "object"
                             },
                             "duration": {
                                 "type": "string"
