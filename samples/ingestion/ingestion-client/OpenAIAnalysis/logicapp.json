@@ -194,6 +194,23 @@
                 },
                 "type": "InitializeVariable"
             },
+            "Initialize_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "filecontent",
+                            "type": "string",
+                            "value": "@{body('Read_blob_content')?['content']}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Read_blob_content": [
+                        "SUCCEEDED"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
             "Parse_JSON": {
                 "inputs": {
                     "content": "@triggerBody()?['contentData']",
@@ -510,7 +527,7 @@
             },
             "Parse_JSON_Transcription": {
                 "inputs": {
-                    "content": "@body('Read_blob_content')?['content']",
+                    "content": "@variables('filecontent')",
                     "schema": {
                         "properties": {
                             "combinedRecognizedPhrases": {
@@ -629,7 +646,7 @@
                     }
                 },
                 "runAfter": {
-                    "Read_blob_content": [
+                    "Initialize_variable": [
                         "SUCCEEDED"
                     ]
                 },
@@ -639,7 +656,8 @@
                 "inputs": {
                     "parameters": {
                         "blobName": "@variables('file-name')",
-                        "containerName": "json-result-output"
+                        "containerName": "json-result-output",
+                        "inferContentType": true
                     },
                     "serviceProviderConfiguration": {
                         "connectionName": "AzureBlob",
