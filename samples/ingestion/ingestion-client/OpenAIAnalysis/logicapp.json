@@ -4,12 +4,13 @@
         "actions": {
             "Condition": {
                 "actions": {
-                    "Upload_blob_to_storage_container_Parsed": {
+                    "Upload_blob_to_storage_container_1": {
                         "inputs": {
                             "parameters": {
-                                "blobName": "@{variables('file-name')}-openai.json",
+                                "blobName": "@{variables('file-name')}-openai-raw.json",
                                 "containerName": "openai-result-output",
-                                "content": "@outputs('Parse_JSON_-_OpenAI')?['body']?['choices']?[0]?['message']?['content']"
+                                "content": "@body('HTTP-OpenAI')",
+                                "overrideIfExists": "True"
                             },
                             "serviceProviderConfiguration": {
                                 "connectionName": "AzureBlob",
@@ -18,19 +19,19 @@
                             }
                         },
                         "runAfter": {
-                            "Upload_blob_to_storage_container_Raw": [
+                            "Upload_blob_to_storage_container_Parsed": [
                                 "SUCCEEDED"
                             ]
                         },
                         "type": "ServiceProvider"
                     },
-                    "Upload_blob_to_storage_container_Raw": {
+                    "Upload_blob_to_storage_container_Parsed": {
                         "inputs": {
                             "parameters": {
-                                "blobName": "@{variables('file-name')}-openai-raw.json",
+                                "blobName": "@{variables('file-name')}-openai.json",
                                 "containerName": "openai-result-output",
-                                "content": "@outputs('Parse_JSON_-_OpenAI')",
-                                "overrideIfExists": "True"
+                                "content": "@outputs('Parse_JSON_-_OpenAI')?['body']?['choices'][0]?['message']?['content']",
+                                "overrideIfExists": "true"
                             },
                             "serviceProviderConfiguration": {
                                 "connectionName": "AzureBlob",
@@ -113,11 +114,14 @@
                                 "role": "system"
                             },
                             {
-                                "content": "Transcription File: @{variables('file-name')}---- Channel 0 - @{variables('channel-text')?[0]} ----- Channel 1 - @{variables('channel-text')?[1]}",
+                                "content": "Transcription File: @{variables('file-name')}---- Channel 0 - @{variables('channel-text')?[0]} ----- Channel 1 - @{variables('channel-text')?[1]}. @{parameters('system-prompt-suffix')}",
                                 "role": "user"
                             }
                         ],
                         "presence_penalty": 0,
+                        "response_format": {
+                            "type": "json_object"
+                        },
                         "temperature": 0,
                         "top_p": 1
                     },
