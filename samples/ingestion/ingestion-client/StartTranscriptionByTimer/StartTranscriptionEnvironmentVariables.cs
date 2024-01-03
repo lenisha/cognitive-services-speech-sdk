@@ -6,6 +6,8 @@
 namespace StartTranscriptionByTimer
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using Connector;
     using Connector.Constants;
 
@@ -56,5 +58,19 @@ namespace StartTranscriptionByTimer
 
         public static readonly string StartTranscriptionServiceBusConnectionString = Environment.GetEnvironmentVariable(nameof(StartTranscriptionServiceBusConnectionString), EnvironmentVariableTarget.Process);
         public static readonly int[] Channels = int.TryParse(Environment.GetEnvironmentVariable(nameof(Channels), EnvironmentVariableTarget.Process), out int result) && result == 1 ? Constants.Channels : new int[] { result };
+        public static readonly LanguageIdentification LanguageIdentification = new LanguageIdentification { CandidateLocales = new[] { "en-EN", "fr-FR" } };
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "SA1402:File may only contain a single type", Justification = "Used by Entity Framework")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "SA1649:FileHeaderFileNameDocumentationMustMatchTypeName", Justification = "Used by Entity Framework")]
+    public class LanguageIdentification
+    {
+        private string[] candidateLocales;
+
+        public IEnumerable<string> CandidateLocales
+        {
+            get { return this.candidateLocales; }
+            set { this.candidateLocales = value.ToArray(); }
+        }
     }
 }

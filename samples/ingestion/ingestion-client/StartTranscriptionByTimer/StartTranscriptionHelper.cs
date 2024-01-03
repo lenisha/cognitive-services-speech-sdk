@@ -333,6 +333,10 @@ namespace StartTranscriptionByTimer
             var channels = StartTranscriptionEnvironmentVariables.Channels;
             properties.Add("Channels", channels);
             this.logger.LogInformation($"Setting channels to {string.Join(",", channels)}");
+
+            var languageIdentification = StartTranscriptionEnvironmentVariables.LanguageIdentification;
+            properties.Add("LanguageIdentification", languageIdentification);
+            this.logger.LogInformation($"Setting channels to {string.Join(",", languageIdentification)}");
             return properties;
         }
 
